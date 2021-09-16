@@ -12,7 +12,8 @@
 
 __global__
 void cos_gpu(float *arg, float *res) {
-	res[threadIdx.x] = cosf(arg[threadIdx.x]);
+
+	res[threadIdx.x + blockIdx.x * blockDim.x] = cosf(arg[threadIdx.x + blockIdx.x * blockDim.x]);
 }
 
 float randFloat(float min, float max) {
