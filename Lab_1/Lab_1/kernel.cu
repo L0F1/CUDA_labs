@@ -7,16 +7,16 @@
 #include <iostream>
 #include <chrono>
 
-#define BLOCK_NUM 8
-
 
 __global__
 void cos_gpu(float *arg, float *res) {
 
-	res[threadIdx.x + blockIdx.x * blockDim.x] = cosf(arg[threadIdx.x + blockIdx.x * blockDim.x]);
+	int b = blockIdx.x * blockDim.x;
+	res[threadIdx.x + b] = cosf(arg[threadIdx.x + b]);
 }
 
 float randFloat(float min, float max) {
+	srand((unsigned int)time(NULL));
 	return  (max - min) * ((((float)rand()) / (float)RAND_MAX)) + min;
 }
 
@@ -47,7 +47,7 @@ void gpu_compute(int N) {
 
 
 	// вычисление функции
-	cos_gpu <<<BLOCK_NUM, N / BLOCK_NUM >>> (device_args, device_res);
+	cos_gpu <<<1, N >>> (device_args, device_res);
 
 	// дожидаемся выполнения
 	cudaThreadSynchronize();
@@ -67,7 +67,7 @@ void gpu_compute(int N) {
 	delete[] host_res;
 
 	std::cout << "\n\n=====================   GPU   =====================\n";
-	std::cout << "DEVICE GPU compute time: " << gpuTime << " milliseconds\n\n";
+	std::cout << "DEVICE GPU compute time: " << gpuTime * 1000 << " microseconds\n\n";
 }
 
 void cpu_compute(int N) {
@@ -86,13 +86,13 @@ void cpu_compute(int N) {
 		host_res[i] = cosf(host_args[i]);
 
 	auto stop = std::chrono::high_resolution_clock::now();
-	auto cpuTime = std::chrono::duration_cast<micro>(stop - start).count() / 1000.0f;
+	auto cpuTime = std::chrono::duration_cast<micro>(stop - start).count();
 
 	delete[] host_args;
 	delete[] host_res;
 
 	std::cout << "\n\n=====================   CPU   =====================\n";
-	std::cout << "HOST CPU compute time: " << cpuTime << " milliseconds\n\n";
+	std::cout << "HOST CPU compute time: " << cpuTime << " microseconds\n\n";
 }
 
 int main()
